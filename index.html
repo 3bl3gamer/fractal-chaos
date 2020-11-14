@@ -1,0 +1,186 @@
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Particle Fractals</title>
+		<style>
+			body {
+				margin: 0;
+				background: #222;
+				display: flex;
+			}
+
+			fieldset {
+				border-color: #444;
+				margin: 0;
+			}
+
+			input[type="range"] {
+				vertical-align: middle;
+			}
+
+			a {
+				color: goldenrod;
+			}
+
+			a.button {
+				color: goldenrod;
+				font-family: Cantarell;
+			}
+
+			a.button:not(:hover) {
+				text-decoration: none;
+			}
+
+			.dim {
+				font-size: 80%;
+				color: #555;
+				transition: color 0.1s ease;
+			}
+
+			.cfg-wrap:hover .dim {
+				color: #888;
+			}
+
+			.cfg-wrap {
+				position: absolute;
+				color: lightgray;
+				left: 0;
+				top: 0;
+				padding: 5px;
+				background-color: rgba(32, 32, 32, 0.5);
+				transition: background-color 0.1s ease;
+				z-index: 1;
+			}
+
+			.cfg-wrap:hover {
+				background-color: rgba(32, 32, 32, 0.7);
+			}
+
+			#hidden-cfg:not(:target) {
+				display: none;
+			}
+
+			#hidden-cfg:target~* {
+				display: none;
+			}
+
+			#brightness-range {
+				width: 137px;
+			}
+
+			#points-count-input {
+				width: 56px;
+			}
+
+			#iter-offset-input {
+				box-sizing: border-box;
+				width: 55px;
+				-moz-appearance: textfield;
+			}
+
+			#iter-offset-input::-webkit-outer-spin-button,
+			#iter-offset-input::-webkit-inner-spin-button {
+				-webkit-appearance: none;
+				margin: 0;
+			}
+
+			#speed-range {
+				width: 110px;
+			}
+
+			#iter-offset-range {
+				width: 112px;
+			}
+
+
+			#buffer-filling-progress-box {
+				position: relative;
+				height: 5px;
+				margin: 0 0 5px 0;
+				border-radius: 1px;
+				background-color: rgba(64, 64, 64, 0.8);
+				overflow: hidden;
+			}
+
+			#buffer-filling-progress-box .bar {
+				position: absolute;
+				height: 100%;
+				left: 0;
+				top: 0;
+				background-color: green;
+			}
+
+			#canvas {
+				width: 100vmin;
+				height: 100vmin;
+				position: absolute;
+				margin-left: calc(50vw - 50vmin);
+			}
+		</style>
+	</head>
+	<body>
+		<div class="cfg-wrap">
+			<a id="hidden-cfg" class="button" href="#">&gt;&gt;</a>
+			<a id="cfg-hide-button" class="button" href="#hidden-cfg">&lt;&lt; скрыть</a>
+			<fieldset>
+				<legend>Размер</legend>
+				<span id="screen-size-box">...</span>px
+				<label><input id="size-4k-switch" type="radio" name="size-switch" />4k</label>
+				<label><input id="size-1k-switch" type="radio" name="size-switch" />1k</label>
+				<label><input id="size-default-switch" type="radio" name="size-switch" checked />под экран</label>
+			</fieldset>
+			<fieldset>
+				<legend>Цвет</legend>
+				<label><input id="color-dir-to-hue-switch" type="radio" name="color-switch" checked />радужный</label><br>
+				<label><input id="color-dir-to-hue-2-switch" type="radio" name="color-switch" />радужный ассимметричный</label><br>
+				<label><input id="color-dir-to-hue-3-switch" type="radio" name="color-switch" />розоватый</label><br>
+				<label><input id="color-monochrome-switch" type="radio" name="color-switch" />монохомный</label><br>
+				<label>яркость: <input id="brightness-range" type="range" min="1" max="10" step="0.1" value="5.0" />
+					<span id="brightness-value-box">0</span></label>
+			</fieldset>
+			<fieldset>
+				<legend>Точки</legend>
+				<label>опорные: <input id="points-count-input" type="number" min="3" value="6" /> шт.</label><br>
+				<label>отступ: <input id="iter-offset-range" type="range" min="0" max="1" step="0.01" value="0.5" />
+					<input id="iter-offset-input" type="number" min="-1" max="2" step="any" value="0.5" size="3" /></label>
+			</fieldset>
+			<fieldset>
+				<legend>Генерация</legend>
+				<label>плавно <input id="speed-range" type="range" min="2" max="4" step="1" value="3"> быстро</label></label>
+			</fieldset>
+			<fieldset>
+				<legend>Статус</legend>
+				<div id="buffer-filling-progress-box">
+					<div class="bar"></div>
+				</div>
+				прошло: <span id="elapsed-time-box">0м 0с</span><br>
+				точек: <span id="dots-count-box">0</span><br>
+			</fieldset>
+			<fieldset>
+				<legend>Пресеты</legend>
+				<a id="preset-3" class="button" href="javascript:void 0">треугольник Серпинского</a><br>
+				<a id="preset-8-ext" class="button" href="javascript:void 0">ковёр Серпинского*</a><br>
+				<a id="preset-4" class="button" href="javascript:void 0">квадрат</a><br>
+				<a id="preset-4-plaid-fabric" class="button" href="javascript:void 0">клетчатая ткань</a><br>
+				<a id="preset-5" class="button" href="javascript:void 0">пятиугольник</a><br>
+				<a id="preset-6-hue" class="button" href="javascript:void 0">шестиугольник</a><br>
+				<a id="preset-64-bublic" class="button" href="javascript:void 0">бублик-рентген</a><br>
+				<a id="preset-32-eye-apple" class="button" href="javascript:void 0">зрачок</a><br>
+				<a id="preset-12-ring-of-rings" class="button" href="javascript:void 0">кольцо колец (12)</a><br>
+				<a id="preset-16-ring-of-rings" class="button" href="javascript:void 0">кольцо колец (16)</a><br>
+				<a id="preset-15-smth-curvy" class="button" href="javascript:void 0">нечто фактурное</a><br>
+				<a id="preset-6-tesseract" class="button" href="javascript:void 0">гиперкуб*</a><br>
+				<a id="preset-6-tesseract-frame" class="button" href="javascript:void 0">гиперкуб (каркас)*</a>
+				<div class="dim">
+					*опорные точки расставлены<br>
+					специальным образом: эти паттерны<br>
+					не получить с помощью настроек
+				</div>
+			</fieldset>
+			<p style="font-size: 92%">Вдохновлено <a href="https://youtu.be/o8TZMtoJPVs?t=623">одним видео с ютюба</a></p>
+		</div>
+		<canvas id="canvas"></canvas>
+		<script src="index.js"></script>
+	</body>
+</html>
